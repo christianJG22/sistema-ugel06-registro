@@ -1,266 +1,247 @@
-# 🚂 Guía Completa: Desplegar en Railway
+# 🚂 Despliegue en Railway - Guía Paso a Paso
 
-## ✅ Por Qué Railway es Perfecto para Ti
-
-- ✅ **$5 USD gratis cada mes** (se renueva automáticamente)
-- ✅ **No se duerme** - siempre activo
-- ✅ **Link público permanente** para compartir
-- ✅ **Múltiples usuarios simultáneos**
-- ✅ **PostgreSQL incluido gratis**
-- ✅ **Deploy automático** desde GitHub
+## ✅ Repositorio a Usar
+https://github.com/christianJG22/sistema-ugel06
 
 ---
 
-## 📋 PASO 1: Arreglar GitHub (PRIMERO)
+## 📋 PASO 1: Crear Cuenta en Railway
 
-### Opción A: Usar GitHub Desktop (MÁS FÁCIL)
-
-1. **Descargar GitHub Desktop:**
-   - https://desktop.github.com/
-   
-2. **Abrir GitHub Desktop**
-   - Sign in con tu cuenta GitHub
-
-3. **Publicar Repositorio:**
-   - File → Add Local Repository
-   - Seleccionar: `c:\Users\CHRISTIAN\Desktop\sistema-registro-ie`
-   - Si dice "repository not found", click "create a repository"
-   - Name: `sistema-registro-ie`
-   - Desmarcar "Keep this code private"
-   - Click "Publish repository"
-
-### Opción B: Línea de Comandos con Token
-
-```powershell
-cd c:\Users\CHRISTIAN\Desktop\sistema-registro-ie
-
-# Remover origin problemático
-git remote remove origin
-
-# Ir a GitHub y crear nuevo repo: sistema-registro-ie (público)
-
-# Agregar con tu token
-git remote add origin https://cristianJG22:TU-TOKEN@github.com/cristianJG22/sistema-registro-ie.git
-
-# Push
-git push -u origin main
-```
-
-**Obtener token:**
-1. https://github.com/settings/tokens
-2. Generate new token (classic)
-3. Marcar: `repo`
-4. Generar y copiar
+1. **Abre tu navegador** y ve a: **https://railway.app**
+2. Click en **"Start a New Project"** o **"Login"**
+3. **Sign up with GitHub**
+4. Autoriza Railway para acceder a tus repositorios
+5. ✅ Ya tienes cuenta
 
 ---
 
-## 📋 PASO 2: Crear Cuenta en Railway
+## 📋 PASO 2: Crear Base de Datos PostgreSQL
 
-1. **Ve a:** https://railway.app
-2. **Sign Up with GitHub**
-3. **Autoriza Railway** para acceder a tus repositorios
-
----
-
-## 📋 PASO 3: Crear PostgreSQL Database
-
-1. En Railway Dashboard → **New Project**
-2. Click **"Provision PostgreSQL"**
-3. Espera 30 segundos
-4. **Copia estas variables** (las necesitarás):
-   - Click en PostgreSQL
-   - Tab "Variables"
-   - Copia: `DATABASE_URL`
+1. En Railway Dashboard → Click **"New Project"**
+2. Selecciona **"Provision PostgreSQL"**
+3. Espera 1 minuto mientras se crea
+4. **IMPORTANTE:** Copia la variable `DATABASE_URL`:
+   - Click en el servicio "PostgreSQL"
+   - Pestaña **"Variables"**
+   - Busca `DATABASE_URL`
+   - Click en el icono de copiar 📋
+   - **Guarda esto en un lugar seguro** (lo necesitarás en el Paso 4)
 
 ---
 
-## 📋 PASO 4: Desplegar Backend
+## 📋 PASO 3: Agregar Backend al Proyecto
 
-1. En el mismo proyecto → **"+ New"** → **"GitHub Repo"**
-2. Selecciona: `sistema-registro-ie`
-3. Railway detectará que hay múltiples apps, selecciona **Root directory: `backend`**
+1. En el MISMO proyecto → Click **"+ New"**
+2. Selecciona **"GitHub Repo"**
+3. Si no aparece tu repo:
+   - Click **"Configure GitHub App"**
+   - Selecciona tu cuenta
+   - Da acceso al repo `sistema-ugel06`
+4. Selecciona el repositorio: **`sistema-ugel06`**
+5. Railway lo detectará automáticamente
 
 ### Configurar Backend:
 
-1. Click en el servicio "backend"
+1. Click en el servicio que se creó
 2. **Settings:**
+   - **Name:** Cambia a `backend` (para identificarlo)
    - **Root Directory:** `backend`
-   - **Build Command:** `npm install`
+   - **Build Command:** Dejar vacío (usa package.json)
    - **Start Command:** `node server.js`
 
-3. **Variables (Tab "Variables"):**
-   - Click "+ New Variable"
-   - Agregar estas 2 variables:
-
+3. **Variables de Entorno** (Tab "Variables"):
+   - Click **"+ New Variable"**
+   
+   **Variable 1:**
    ```
-   NODE_ENV = production
-   DATABASE_URL = (pegar la URL que copiaste del paso 3)
+   Name: NODE_ENV
+   Value: production
+   ```
+   
+   **Variable 2:**
+   ```
+   Name: DATABASE_URL
+   Value: (pega la URL que copiaste en el Paso 2)
    ```
 
-4. **Deploy:**
-   - Automáticamente se desplegará
+4. **Generate Domain** (para obtener URL pública):
+   - Settings → **Networking**
+   - Click **"Generate Domain"**
+   - Se genera algo como: `backend-production-XXXX.up.railway.app`
+   - **Copia esta URL** (la necesitas para el frontend)
+
+5. El backend se desplegará automáticamente
+   - Ve a **"Deployments"**
    - Espera 2-3 minutos
-
-5. **Obtener URL del Backend:**
-   - Settings → Networking
-   - Click "Generate Domain"
-   - Copia la URL: `https://backend-production-XXXX.up.railway.app`
+   - Debe decir **"Success"** con un ✅ verde
 
 ---
 
-## 📋 PASO 5: Desplegar Frontend
+## 📋 PASO 4: Agregar Frontend al Proyecto
 
-1. En el proyecto → **"+ New"** → **"GitHub Repo"**  
-2. Selecciona el MISMO repo: `sistema-registro-ie`
-3. Root directory: `mi-sistema`
+1. En el proyecto → Click **"+ New"**
+2. Selecciona **"GitHub Repo"**
+3. Selecciona el MISMO repo: **`sistema-ugel06`**
 
 ### Configurar Frontend:
 
-1. Click en el servicio "frontend"
+1. Click en el nuevo servicio
 2. **Settings:**
+   - **Name:** `frontend`
    - **Root Directory:** `mi-sistema`
+   - **Builder:** Nixpacks (automático)
    - **Build Command:** `npm install && npm run build`
    - **Start Command:** Dejar vacío
-   - **Service Type:** ⚠️ Cambiar a **"Static Site"** (muy importante)
-   - **Output Directory:** `build`
+   - **Watch Paths:** `mi-sistema/**`
 
-3. **Variables:**
-   - Click "+ New Variable"
+3. **Variables de Entorno**:
+   - Click **"+ New Variable"**
    
    ```
-   REACT_APP_API_URL = https://TU-BACKEND-URL.up.railway.app/api
+   Name: REACT_APP_API_URL
+   Value: https://TU-URL-BACKEND.up.railway.app/api
    ```
    
-   ⚠️ **IMPORTANTE:** Reemplaza con la URL real de tu backend del paso 4
+   ⚠️ **MUY IMPORTANTE:** 
+   - Reemplaza `TU-URL-BACKEND` con la URL del backend del Paso 3
+   - Debe terminar en `/api`
+   - Ejemplo: `https://backend-production-a1b2.up.railway.app/api`
 
-4. **Deploy:**
-   - Click "Deploy"
-   - Espera 2-3 minutos
-
-5. **Obtener URL Pública:**
+4. **Generate Domain**:
    - Settings → Networking
    - Click "Generate Domain"
-   - Tu link público: `https://frontend-production-XXXX.up.railway.app`
+   - URL pública: `frontend-production-XXXX.up.railway.app`
+   - **¡Este es tu LINK PÚBLICO para compartir!** 🎉
+
+5. Click **"Deploy"** si no se despliega automáticamente
+   - Espera 3-4 minutos
+   - Debe decir "Success" ✅
 
 ---
 
-## 🎉 PASO 6: ¡LISTO! Comparte el Link
+## 🎉 PASO 5: ¡LISTO! Prueba tu Sistema
 
-Tu sistema estará en:
+### Tu Link Público:
 ```
 https://frontend-production-XXXX.up.railway.app
 ```
 
-**Comparte este link** para que las personas se registren.
+### Pruebas:
 
----
-
-## 🔍 Verificar que Funciona
-
-1. Abre tu link público
-2. **Registra una institución** (sin login)
+1. **Abre el link** en tu navegador
+2. **Registra una institución** (pestaña "Registrar" - público)
 3. **Login como admin:**
+   - Click en "Ver Registros"
    - Usuario: `admin`
    - Contraseña: `ugel06admin`
-4. **Ver registros** en la pestaña "Ver Registros"
+4. **Ver registros** en el panel admin
+5. **Ver base de datos:** 
+   - `https://TU-BACKEND-URL.up.railway.app/db-viewer`
+
+### ✅ Comparte el Link:
+Envía `https://frontend-production-XXXX.up.railway.app` a quien quieras que se registre.
 
 ---
 
-## 📊 Monitoreo en Railway
+## 📊 Monitoreo
 
-### Ver Logs:
+### Ver Logs en Tiempo Real:
 1. Click en el servicio (backend o frontend)
-2. Tab "Deployments"
+2. Pestaña **"Deployments"**
 3. Click en el deployment activo
-4. Ver logs en tiempo real
+4. Ver logs
+
+### Ver Uso de Recursos:
+1. Click en el servicio
+2. Pestaña **"Metrics"**
+3. Ver CPU, RAM, Red
 
 ### Ver Base de Datos:
-En Railway:
-- Click en PostgreSQL
-- Tab "Data"
-- Ver tablas: `instituciones` y `usuarios`
-
-O desde tu aplicación:
-- `https://TU-BACKEND-URL.up.railway.app/db-viewer`
+1. Click en "PostgreSQL"
+2. Pestaña **"Data"**
+3. Ver tablas: `instituciones`, `usuarios`
 
 ---
 
-## 💡 Uso Mensual (Gratis)
+## 💰 Uso y Costos
 
-Con $5 USD/mes incluyes:
-- **Backend:** ~$2.50 (500 horas activo)
-- **Frontend:** ~$0 (estático)
-- **PostgreSQL:** ~$2.50 (siempre activo)
+**Con $5 USD/mes gratis:**
+- Backend: ~400 horas/mes activo
+- Frontend: Ilimitado (estático)
+- PostgreSQL: 1GB almacenamiento
 
-**Total: ~$5/mes = GRATIS** con el crédito que te dan
-
-Si gastas todo el crédito antes de fin de mes:
-- Las apps se pausan automáticamente
+**Si excedes $5/mes:**
+- Los servicios se pausan
 - Se reactivan el 1ro del mes siguiente
-- **Solución:** Agregar tarjeta (solo cobra lo que exceda los $5 gratis)
+- O agrega tarjeta (solo cobra excedente)
 
 ---
 
-## ⚙️ Configuración Avanzada (Opcional)
+## ⚙️ Configuraciones Adicionales
 
 ### Dominio Personalizado:
 1. Settings → Networking
-2. Custom Domain
-3. Agregar tu dominio (ej: `registro-ugel06.com`)
+2. Custom Domains
+3. Agrega tu dominio (ej: `registro-ugel06.com`)
 
-### Backups Automáticos:
-1. Click en PostgreSQL
-2. Settings → Backups
-3. Habilitar backups diarios
+### Redeploy Manual:
+1. Deployments
+2. Click en el deployment actual
+3. "Redeploy"
+
+### Rollback:
+1. Deployments
+2. Click en deployment anterior
+3. "Redeploy"
 
 ---
 
 ## 🆘 Solución de Problemas
 
 ### Backend no inicia:
-- Revisa logs
-- Verifica que `DATABASE_URL` esté configurada
-- Verifica que `NODE_ENV=production`
+- Revisa **Logs** en Deployments
+- Verifica `DATABASE_URL` en Variables
+- Verifica `NODE_ENV=production`
 
-### Frontend no se conecta:
-- Verifica `REACT_APP_API_URL`
-- Debe terminar en `/api`
+### Frontend no conecta:
+- Verifica `REACT_APP_API_URL` tiene `/api` al final
 - Debe ser HTTPS
-- Vuelve a desplegar: Settings → "Redeploy"
+- Redeploy: Settings → Redeploy
 
-### Error CORS:
-- Ya está habilitado en el backend
-- Si persiste, agrega en backend/server.js:
-  ```javascript
-  app.use(cors({
-    origin: 'https://TU-FRONTEND-URL.up.railway.app'
-  }));
-  ```
+### Error 404:
+- Verifica Root Directory: `backend` y `mi-sistema`
+- Verifica que el repo tenga ambas carpetas
+
+### Base de datos vacía:
+- El primer deploy crea las tablas automáticamente
+- Usuario admin se crea solo
+- Verifica en PostgreSQL → Data
 
 ---
 
-## 📝 Resumen de URLs
+## 📝 Checklist Final
 
-Después del despliegue tendrás:
+- [ ] Cuenta Railway creada
+- [ ] PostgreSQL creado y `DATABASE_URL` copiada
+- [ ] Backend desplegado con variables configuradas
+- [ ] Backend URL generada
+- [ ] Frontend desplegado con `REACT_APP_API_URL`
+- [ ] Frontend URL generada (LINK PÚBLICO)
+- [ ] Probado: registro público funciona
+- [ ] Probado: login admin funciona
+- [ ] Link compartido
+
+---
+
+## 🎯 URLs Finales
 
 | Servicio | URL |
 |----------|-----|
-| **Frontend (LINK PÚBLICO)** | `https://frontend-production-XXXX.up.railway.app` |
+| **LINK PÚBLICO (compartir)** | `https://frontend-production-XXXX.up.railway.app` |
 | **Backend API** | `https://backend-production-XXXX.up.railway.app/api` |
 | **Visualizador BD** | `https://backend-production-XXXX.up.railway.app/db-viewer` |
-| **PostgreSQL** | Interno (solo accesible por el backend) |
+| **PostgreSQL** | Interno (solo backend accede) |
 
 ---
 
-## 🎯 Próximos Pasos
-
-1. ✅ Arreglar GitHub (Paso 1)
-2. ✅ Crear cuenta Railway (Paso 2)
-3. ✅ Desplegar PostgreSQL (Paso 3)
-4. ✅ Desplegar Backend (Paso 4)
-5. ✅ Desplegar Frontend (Paso 5)
-6. ✅ Compartir link público (Paso 6)
-
----
-
-**¿Listo? Empieza por el Paso 1 y avísame cuando necesites ayuda.** 🚀
+**¡Listo para empezar! Ve al Paso 1.** 🚀
