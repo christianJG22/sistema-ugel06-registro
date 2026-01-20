@@ -549,12 +549,17 @@ app.get('/', (req, res) => {
   });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`\n========================================`);
-  console.log(`🚀 Servidor UGEL 06 iniciado`);
-  console.log(`📡 Puerto: ${PORT}`);
-  console.log(`🌐 URL: http://localhost:${PORT}`);
-  console.log(`📊 DB Viewer: http://localhost:${PORT}/db-viewer`);
-  console.log(`========================================\n`);
-});
+// Solo iniciar servidor si NO es Vercel (desarrollo local)
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`\n========================================`);
+    console.log(`🚀 Servidor UGEL 06 iniciado`);
+    console.log(`📡 Puerto: ${PORT}`);
+    console.log(`🌐 URL: http://localhost:${PORT}`);
+    console.log(`📊 DB Viewer: http://localhost:${PORT}/db-viewer`);
+    console.log(`========================================\n`);
+  });
+}
+
+// Exportar app para Vercel
+module.exports = app;
