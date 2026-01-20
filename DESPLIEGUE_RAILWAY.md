@@ -1,7 +1,7 @@
 # 🚂 Despliegue en Railway - Guía Paso a Paso
 
 ## ✅ Repositorio a Usar
-https://github.com/christianJG22/sistema-ugel06
+https://github.com/christianJG22/sistema-ugel06-registro
 
 ---
 

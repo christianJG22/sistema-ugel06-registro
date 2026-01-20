@@ -1,3 +1,6 @@
+// Cargar variables de entorno
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -11,15 +14,15 @@ console.log(`Entorno: ${isProduction ? 'PRODUCCIÓN' : 'DESARROLLO'}`);
 console.log(`Base de datos: ${isProduction ? 'PostgreSQL' : 'SQLite'}`);
 
 const {
-    obtenerInstituciones,
-    obtenerInstitucionPorId,
-    crearInstitucion,
-    actualizarInstitucion,
-    eliminarInstitucion,
-    verificarDniExiste,
-    obtenerUsuarioPorNombre,
-    inicializarDB,
-    obtenerTodasLasTablas
+  obtenerInstituciones,
+  obtenerInstitucionPorId,
+  crearInstitucion,
+  actualizarInstitucion,
+  eliminarInstitucion,
+  verificarDniExiste,
+  obtenerUsuarioPorNombre,
+  inicializarDB,
+  obtenerTodasLasTablas
 } = require(dbModule);
 
 const { verificarToken, generarToken } = require('./auth');
@@ -34,250 +37,250 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Inicializar base de datos en producción (PostgreSQL)
 if (isProduction && inicializarDB) {
-    inicializarDB().catch(err => {
-        console.error('Error fatal al inicializar BD:', err);
-        process.exit(1);
-    });
+  inicializarDB().catch(err => {
+    console.error('Error fatal al inicializar BD:', err);
+    process.exit(1);
+  });
 }
 
 // ============= RUTAS PÚBLICAS =============
 
 // Obtener todas las instituciones (público)
 app.get('/api/instituciones', (req, res) => {
-    obtenerInstituciones((err, instituciones) => {
-        if (err) {
-            return res.status(500).json({
-                success: false,
-                message: 'Error al obtener instituciones',
-                error: err.message
-            });
-        }
-        res.json({ success: true, data: instituciones });
-    });
+  obtenerInstituciones((err, instituciones) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error al obtener instituciones',
+        error: err.message
+      });
+    }
+    res.json({ success: true, data: instituciones });
+  });
 });
 
 // Crear institución (público - para registro)
 app.post('/api/instituciones', (req, res) => {
-    const { nombreIE, nombreDirector, dniDirector, situacion, aula, telefono, correo } = req.body;
+  const { nombreIE, nombreDirector, dniDirector, situacion, aula, telefono, correo } = req.body;
 
-    // Validaciones básicas
-    if (!nombreIE || !nombreDirector || !dniDirector || !situacion || !aula || !telefono || !correo) {
-        return res.status(400).json({
-            success: false,
-            message: 'Todos los campos son requeridos'
-        });
+  // Validaciones básicas
+  if (!nombreIE || !nombreDirector || !dniDirector || !situacion || !aula || !telefono || !correo) {
+    return res.status(400).json({
+      success: false,
+      message: 'Todos los campos son requeridos'
+    });
+  }
+
+  // Verificar si DNI ya existe
+  verificarDniExiste(dniDirector, null, (err, existe) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error al verificar DNI',
+        error: err.message
+      });
     }
 
-    // Verificar si DNI ya existe
-    verificarDniExiste(dniDirector, null, (err, existe) => {
-        if (err) {
-            return res.status(500).json({
-                success: false,
-                message: 'Error al verificar DNI',
-                error: err.message
-            });
-        }
+    if (existe) {
+      return res.status(400).json({
+        success: false,
+        message: 'El DNI ya está registrado'
+      });
+    }
 
-        if (existe) {
-            return res.status(400).json({
-                success: false,
-                message: 'El DNI ya está registrado'
-            });
-        }
-
-        // Crear institución
-        crearInstitucion(req.body, (err, id) => {
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    message: 'Error al crear institución',
-                    error: err.message
-                });
-            }
-
-            res.status(201).json({
-                success: true,
-                message: 'Institución registrada exitosamente',
-                id: id
-            });
+    // Crear institución
+    crearInstitucion(req.body, (err, id) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: 'Error al crear institución',
+          error: err.message
         });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: 'Institución registrada exitosamente',
+        id: id
+      });
     });
+  });
 });
 
 // Login de administrador
 app.post('/api/auth/login', (req, res) => {
-    const { usuario, password } = req.body;
+  const { usuario, password } = req.body;
 
-    if (!usuario || !password) {
-        return res.status(400).json({
-            success: false,
-            message: 'Usuario y contraseña son requeridos'
-        });
+  if (!usuario || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Usuario y contraseña son requeridos'
+    });
+  }
+
+  obtenerUsuarioPorNombre(usuario, (err, usuarioDb) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error en el servidor',
+        error: err.message
+      });
     }
 
-    obtenerUsuarioPorNombre(usuario, (err, usuarioDb) => {
-        if (err) {
-            return res.status(500).json({
-                success: false,
-                message: 'Error en el servidor',
-                error: err.message
-            });
-        }
+    if (!usuarioDb) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuario o contraseña incorrectos'
+      });
+    }
 
-        if (!usuarioDb) {
-            return res.status(401).json({
-                success: false,
-                message: 'Usuario o contraseña incorrectos'
-            });
-        }
+    // Verificar contraseña
+    const passwordValida = bcrypt.compareSync(password, usuarioDb.password);
 
-        // Verificar contraseña
-        const passwordValida = bcrypt.compareSync(password, usuarioDb.password);
+    if (!passwordValida) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuario o contraseña incorrectos'
+      });
+    }
 
-        if (!passwordValida) {
-            return res.status(401).json({
-                success: false,
-                message: 'Usuario o contraseña incorrectos'
-            });
-        }
+    // Generar token
+    const token = generarToken(usuarioDb);
 
-        // Generar token
-        const token = generarToken(usuarioDb);
-
-        res.json({
-            success: true,
-            message: 'Login exitoso',
-            token: token,
-            usuario: {
-                id: usuarioDb.id,
-                usuario: usuarioDb.usuario,
-                rol: usuarioDb.rol
-            }
-        });
+    res.json({
+      success: true,
+      message: 'Login exitoso',
+      token: token,
+      usuario: {
+        id: usuarioDb.id,
+        usuario: usuarioDb.usuario,
+        rol: usuarioDb.rol
+      }
     });
+  });
 });
 
 // ============= RUTAS PROTEGIDAS (SOLO ADMIN) =============
 
 // Actualizar institución (requiere autenticación)
 app.put('/api/instituciones/:id', verificarToken, (req, res) => {
-    const id = req.params.id;
-    const { nombreIE, nombreDirector, dniDirector, situacion, aula, telefono, correo } = req.body;
+  const id = req.params.id;
+  const { nombreIE, nombreDirector, dniDirector, situacion, aula, telefono, correo } = req.body;
 
-    if (!nombreIE || !nombreDirector || !dniDirector || !situacion || !aula || !telefono || !correo) {
-        return res.status(400).json({
-            success: false,
-            message: 'Todos los campos son requeridos'
-        });
+  if (!nombreIE || !nombreDirector || !dniDirector || !situacion || !aula || !telefono || !correo) {
+    return res.status(400).json({
+      success: false,
+      message: 'Todos los campos son requeridos'
+    });
+  }
+
+  // Verificar si DNI ya existe (excluyendo el registro actual)
+  verificarDniExiste(dniDirector, id, (err, existe) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error al verificar DNI',
+        error: err.message
+      });
     }
 
-    // Verificar si DNI ya existe (excluyendo el registro actual)
-    verificarDniExiste(dniDirector, id, (err, existe) => {
-        if (err) {
-            return res.status(500).json({
-                success: false,
-                message: 'Error al verificar DNI',
-                error: err.message
-            });
-        }
+    if (existe) {
+      return res.status(400).json({
+        success: false,
+        message: 'El DNI ya está registrado en otra institución'
+      });
+    }
 
-        if (existe) {
-            return res.status(400).json({
-                success: false,
-                message: 'El DNI ya está registrado en otra institución'
-            });
-        }
-
-        actualizarInstitucion(id, req.body, (err, changes) => {
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    message: 'Error al actualizar institución',
-                    error: err.message
-                });
-            }
-
-            if (changes === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Institución no encontrada'
-                });
-            }
-
-            res.json({
-                success: true,
-                message: 'Institución actualizada exitosamente'
-            });
+    actualizarInstitucion(id, req.body, (err, changes) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: 'Error al actualizar institución',
+          error: err.message
         });
+      }
+
+      if (changes === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Institución no encontrada'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Institución actualizada exitosamente'
+      });
     });
+  });
 });
 
 // Eliminar institución (requiere autenticación)
 app.delete('/api/instituciones/:id', verificarToken, (req, res) => {
-    const id = req.params.id;
+  const id = req.params.id;
 
-    eliminarInstitucion(id, (err, changes) => {
-        if (err) {
-            return res.status(500).json({
-                success: false,
-                message: 'Error al eliminar institución',
-                error: err.message
-            });
-        }
+  eliminarInstitucion(id, (err, changes) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error al eliminar institución',
+        error: err.message
+      });
+    }
 
-        if (changes === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Institución no encontrada'
-            });
-        }
+    if (changes === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Institución no encontrada'
+      });
+    }
 
-        res.json({
-            success: true,
-            message: 'Institución eliminada exitosamente'
-        });
+    res.json({
+      success: true,
+      message: 'Institución eliminada exitosamente'
     });
+  });
 });
 
 // Verificar token (para validar sesión)
 app.get('/api/auth/verify', verificarToken, (req, res) => {
-    res.json({
-        success: true,
-        message: 'Token válido',
-        usuario: req.usuario
-    });
+  res.json({
+    success: true,
+    message: 'Token válido',
+    usuario: req.usuario
+  });
 });
 
 // ============= VISUALIZADOR DE BASE DE DATOS =============
 
 // Visualizador web de la base de datos
 app.get('/db-viewer', async (req, res) => {
-    try {
-        let instituciones, usuarios;
+  try {
+    let instituciones, usuarios;
 
-        if (isProduction && obtenerTodasLasTablas) {
-            // PostgreSQL
-            const datos = await obtenerTodasLasTablas();
-            instituciones = datos.instituciones;
-            usuarios = datos.usuarios;
-        } else {
-            // SQLite (callback-based)
-            const db = require('./database').db;
-            instituciones = await new Promise((resolve, reject) => {
-                db.all('SELECT * FROM instituciones ORDER BY fechaRegistro DESC', [], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows);
-                });
-            });
-            usuarios = await new Promise((resolve, reject) => {
-                db.all('SELECT id, usuario, rol, fechaCreacion FROM usuarios', [], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows);
-                });
-            });
-        }
+    if (isProduction && obtenerTodasLasTablas) {
+      // PostgreSQL
+      const datos = await obtenerTodasLasTablas();
+      instituciones = datos.instituciones;
+      usuarios = datos.usuarios;
+    } else {
+      // SQLite (callback-based)
+      const db = require('./database').db;
+      instituciones = await new Promise((resolve, reject) => {
+        db.all('SELECT * FROM instituciones ORDER BY fechaRegistro DESC', [], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+      usuarios = await new Promise((resolve, reject) => {
+        db.all('SELECT id, usuario, rol, fechaCreacion FROM usuarios', [], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+    }
 
-        const html = `
+    const html = `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -514,44 +517,44 @@ app.get('/db-viewer', async (req, res) => {
 </html>
     `;
 
-        res.send(html);
-    } catch (error) {
-        console.error('Error en visualizador:', error);
-        res.status(500).send('Error al cargar visualizador');
-    }
+    res.send(html);
+  } catch (error) {
+    console.error('Error en visualizador:', error);
+    res.status(500).send('Error al cargar visualizador');
+  }
 });
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Servidor funcionando correctamente',
-        environment: isProduction ? 'production' : 'development',
-        database: isProduction ? 'PostgreSQL' : 'SQLite',
-        timestamp: new Date().toISOString()
-    });
+  res.json({
+    success: true,
+    message: 'Servidor funcionando correctamente',
+    environment: isProduction ? 'production' : 'development',
+    database: isProduction ? 'PostgreSQL' : 'SQLite',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Ruta raíz
 app.get('/', (req, res) => {
-    res.json({
-        message: 'API UGEL 06 - Sistema de Registro',
-        version: '1.0.0',
-        endpoints: {
-            health: '/api/health',
-            dbViewer: '/db-viewer',
-            instituciones: '/api/instituciones',
-            login: '/api/auth/login'
-        }
-    });
+  res.json({
+    message: 'API UGEL 06 - Sistema de Registro',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      dbViewer: '/db-viewer',
+      instituciones: '/api/instituciones',
+      login: '/api/auth/login'
+    }
+  });
 });
 
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`\n========================================`);
-    console.log(`🚀 Servidor UGEL 06 iniciado`);
-    console.log(`📡 Puerto: ${PORT}`);
-    console.log(`🌐 URL: http://localhost:${PORT}`);
-    console.log(`📊 DB Viewer: http://localhost:${PORT}/db-viewer`);
-    console.log(`========================================\n`);
+  console.log(`\n========================================`);
+  console.log(`🚀 Servidor UGEL 06 iniciado`);
+  console.log(`📡 Puerto: ${PORT}`);
+  console.log(`🌐 URL: http://localhost:${PORT}`);
+  console.log(`📊 DB Viewer: http://localhost:${PORT}/db-viewer`);
+  console.log(`========================================\n`);
 });
