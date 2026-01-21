@@ -4,21 +4,25 @@ const bcrypt = require('bcryptjs');
 // Configuración de PostgreSQL
 // En desarrollo usa SQLite, en producción usa PostgreSQL
 const isProduction = process.env.NODE_ENV === 'production';
+const databaseUrl = process.env.DATABASE_URL;
 
 let pool;
 
-if (isProduction) {
+if (databaseUrl) {
+    const useSSL = isProduction || databaseUrl.includes('supabase.co');
+
     pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
+        connectionString: databaseUrl,
+        ssl: useSSL ? { rejectUnauthorized: false } : false
     });
-    console.log('✓ Usando PostgreSQL (Producción)');
+
+    console.log(`✓ Configurando conexión PostgreSQL (${useSSL ? 'con SSL' : 'sin SSL'})`);
 } else {
     pool = new Pool({
-        connectionString: process.env.DATABASE_URL || 'postgresql://localhost/ugel06_dev',
+        connectionString: 'postgresql://localhost/ugel06_dev',
         ssl: false
     });
-    console.log('✓ Intentando conectar a PostgreSQL local');
+    console.log('✓ Usando PostgreSQL local (sin DATABASE_URL)');
 }
 
 // Inicializar base de datos

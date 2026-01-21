@@ -37,10 +37,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Inicializar base de datos en producción (PostgreSQL)
 if (isProduction && inicializarDB) {
-  inicializarDB().catch(err => {
-    console.error('Error fatal al inicializar BD:', err);
-    process.exit(1);
-  });
+  console.log('Iniciando inicialización de BD...');
+  inicializarDB()
+    .then(() => console.log('✓ Base de datos inicializada correctamente'))
+    .catch(err => {
+      console.error('❌ Error fatal al inicializar BD:', err.message);
+      if (err.code === 'ECONNREFUSED' || err.code === '28P01') {
+        console.error('💡 Tip: Verifica que DATABASE_URL sea correcta y que el usuario tenga permisos.');
+      }
+      // No salimos del proceso para permitir que Vercel intente servir otras rutas o reintentar
+      // process.exit(1); 
+    });
 }
 
 // ============= RUTAS PÚBLICAS =============
